@@ -108,7 +108,6 @@ Pointer<T,size>::Pointer(T *t){
     first = false;
 
     PtrDetails<T> ptr(t);
- 
     addr = ptr.memPtr;
     ptr.refcount++;
     isArray = ptr.isArray;
@@ -123,17 +122,14 @@ Pointer<T,size>::Pointer(const Pointer &ob){
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(ob.addr);
 
-    if(p != nullptr){
-        p->refcount++;
+    p->refcount++;
 
-        if(p->isArray){
-            ob.isArray = p->isArray;
-            ob.arraySize = p->arraySize;
-        }else{
-            ob.isArray =false;
-        }
-    }    
-
+    if(p->isArray){
+        ob.isArray = p->isArray;
+        ob.arraySize = p->arraySize;
+    }else{
+        ob.isArray =false;
+    }
 }
 
 // Destructor for Pointer.
@@ -142,7 +138,6 @@ Pointer<T, size>::~Pointer(){
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(addr);
 
-    p->refcount--;
     collect();
 }
 
@@ -160,16 +155,13 @@ bool Pointer<T, size>::collect(){
             
             p = refContainer.erase(p);
 
-            if(p->memPtr != nullptr){
-                memfreed = true;
-                if(p->isArray){
-                    delete[] p->memPtr;
-                }else{
-                    delete p->memPtr;
-                }
+            memfreed = true;
+            if(p->isArray){
+                delete[] p->memPtr;
             }else{
-                break;
+                delete p->memPtr;
             }
+
         }
 
     }while(p != refContainer.end());
