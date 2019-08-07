@@ -108,7 +108,7 @@ Pointer<T,size>::Pointer(T *t){
     first = false;
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(t);
-    if(p->memPtr != t)
+    if(p->memPtr != t && t)
     {
         PtrDetails<T> ptr(t);
         addr = ptr.memPtr;
@@ -116,7 +116,7 @@ Pointer<T,size>::Pointer(T *t){
         arraySize = ptr.arraySize;
         ptr.refcount++;
         refContainer.push_front(ptr);
-    }else if(p->memPtr){
+    }else if(p->memPtr != (void*)0x1 && p->memPtr){
         p->refcount++;
     }
 }
@@ -136,12 +136,15 @@ Pointer<T,size>::Pointer(const Pointer &ob){
 template <class T, int size>
 Pointer<T, size>::~Pointer(){
     typename std::list<PtrDetails<T>>::iterator p;
-    p = findPtrInfo(addr);
+    p = findPtrInfo(this->addr);
 
-    if(p->refcount > 0)
+    if(p->refcount > 0 && p->memPtr != (void*)0x1){
         p->refcount--;
+    }
 
-    collect();
+    delete this->addr;
+
+    collect();    
 }
 
 // Collect garbage. Returns true if at least
@@ -153,24 +156,18 @@ bool Pointer<T, size>::collect(){
     do
     {
         for(p = refContainer.begin(); p!= refContainer.end(); p++){
-            if(p->refcount > 0){
-                continue;
-            }else{
+            if(p->refcount == 0 && p->memPtr != (void*)0x1){
                 refContainer.erase(p);
-            }
-            
-            if(p->memPtr){
-                if(p->isArray){
-                    delete[] p->memPtr;
-                    //delete this->addr;
-                }else
-                {
-                    delete p->memPtr;
-                    //delete[] this->addr;
-                }
-                
+                if(p->memPtr){
+                    if(p->isArray){
+                        delete[] p->memPtr;
+                    }else
+                    {
+                        delete p->memPtr;
+                    }
                 memfreed = true;
                 break; 
+                }
             }
         }
 
@@ -185,10 +182,10 @@ T *Pointer<T, size>::operator=(T *t){
         typename std::list<PtrDetails<T>>::iterator p;
         p = findPtrInfo(t);
         
-        if(p->memPtr)
+        if(p->memPtr != (void*)0x1)
             p->refcount++;
 
-        return p->memPtr;
+        return t;
 }
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
