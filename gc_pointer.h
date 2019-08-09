@@ -112,8 +112,12 @@ Pointer<T,size>::Pointer(T *t){
     {
         PtrDetails<T> ptr(t);
         addr = ptr.memPtr;
-        isArray = ptr.isArray;
         arraySize = ptr.arraySize;
+        if(arraySize > 0){
+            isArray = true;
+        }else{
+            isArray = false;
+        }
         ptr.refcount++;
         refContainer.push_front(ptr);
     }else if(p->memPtr != (void*)0x1 && p->memPtr){
@@ -125,24 +129,30 @@ template< class T, int size>
 Pointer<T,size>::Pointer(const Pointer &ob){
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(ob.addr);
+
     p->refcount++;
-    isArray = p->isArray;
-    arraySize = p->arraySize;
-    addr = p->addr;
-    refContainer = p->refContainer;
+    addr = ob.addr;
+    arraySize = ob.arraySize;
+    if(arraySize > 0)
+        isArray = true;
+    else
+    {
+        isArray = false;
+    }
+
+    ob.~Pointer();
 }
 
 // Destructor for Pointer.
 template <class T, int size>
 Pointer<T, size>::~Pointer(){
     typename std::list<PtrDetails<T>>::iterator p;
-    p = findPtrInfo(this->addr);
+    p = findPtrInfo(addr);
 
     if(p->refcount > 0 && p->memPtr != (void*)0x1){
         p->refcount--;
     }
 
-    delete this->addr;
 
     collect();    
 }
