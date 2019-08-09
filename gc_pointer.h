@@ -124,6 +124,7 @@ Pointer<T,size>::Pointer(T *t){
         p->refcount++;
     }
 }
+
 // Copy constructor.
 template< class T, int size>
 Pointer<T,size>::Pointer(const Pointer &ob){
