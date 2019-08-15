@@ -167,10 +167,9 @@ bool Pointer<T, size>::collect(){
     do
     {
         for(p = refContainer.begin(); p!= refContainer.end(); p++){
-<<<<<<< HEAD
             if(p->refcount > 0)
                 continue;
-            ]
+            
             refContainer.remove(*p);
 
             memfreed = true;
@@ -184,21 +183,7 @@ bool Pointer<T, size>::collect(){
             }
 
             break;
-=======
-            if(p->refcount == 0 && p->memPtr != (void*)0x1){
-                refContainer.erase(p);
-                if(p->memPtr){
-                    if(p->isArray){
-                        delete[] p->memPtr;
-                    }else
-                    {
-                        delete p->memPtr;
-                    }
-                memfreed = true;
-                break; 
-                }
-            }
->>>>>>> 5514c9b82fd507d4dddaab187308fd82802a32a8
+
         }
 
     }while(p != refContainer.end());
@@ -209,7 +194,7 @@ bool Pointer<T, size>::collect(){
 // Overload assignment of pointer to Pointer.
 template <class T, int size>
 T *Pointer<T, size>::operator=(T *t){
-<<<<<<< HEAD
+
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(t);
     if(p->memPtr){
@@ -217,21 +202,11 @@ T *Pointer<T, size>::operator=(T *t){
     }
 
     return t;
-=======
-        typename std::list<PtrDetails<T>>::iterator p;
-        p = findPtrInfo(t);
-        
-        if(p->memPtr != (void*)0x1)
-            p->refcount++;
-
-        return t;
->>>>>>> 5514c9b82fd507d4dddaab187308fd82802a32a8
 }
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
 Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
     typename std::list<PtrDetails<T>>::iterator p;
-<<<<<<< HEAD
     p = findPtrInfo(rv.addr);
     if(p->memPtr)
         return new Pointer(rv);
@@ -239,10 +214,6 @@ Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
     return rv;
     // TODO: Implement operator==
     // LAB: Smart Pointer Project Lab
-=======
-    p = findPtrInfo(addr);
-    p->refcount--;
->>>>>>> 5514c9b82fd507d4dddaab187308fd82802a32a8
 
     p = findPtrInfo(rv.addr);
     p->refcount++;
