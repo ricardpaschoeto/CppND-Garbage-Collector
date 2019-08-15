@@ -153,15 +153,19 @@ bool Pointer<T, size>::collect(){
             if(p->refcount > 0)
                 continue;
             
-            p = refContainer.erase(p);
+            refContainer.remove(*p);
 
             memfreed = true;
-            if(p->isArray){
-                delete[] p->memPtr;
-            }else{
-                delete p->memPtr;
+
+            if(p->memPtr){
+                if(p->isArray){
+                    delete[] p->memPtr;
+                }else{
+                    delete p->memPtr;
+                }
             }
 
+            break;
         }
 
     }while(p != refContainer.end());
@@ -174,20 +178,20 @@ template <class T, int size>
 T *Pointer<T, size>::operator=(T *t){
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(t);
-    if(p->memPtr != nullptr){
-        return t;
+    if(p->memPtr){
+        return p->memPtr;
     }
 
-    return nullptr;
+    return t;
 }
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
 Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
     typename std::list<PtrDetails<T>>::iterator p;
-    for(p = refContainer.begin(); p != refContainer.end(); p++){
-        if(rv.addr == p->memPtr)
-            return NULL;
-    }
+    p = findPtrInfo(rv.addr);
+    if(p->memPtr)
+        return new Pointer(rv);
+
     return rv;
     // TODO: Implement operator==
     // LAB: Smart Pointer Project Lab
