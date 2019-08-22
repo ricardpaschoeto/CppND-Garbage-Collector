@@ -186,6 +186,9 @@ bool Pointer<T, size>::collect(){
             memfreed = true;
             break; 
             }
+
+            break;
+
         }
 
     }while(p != refContainer.end());
@@ -196,11 +199,11 @@ bool Pointer<T, size>::collect(){
 // Overload assignment of pointer to Pointer.
 template <class T, int size>
 T *Pointer<T, size>::operator=(T *t){
-        typename std::list<PtrDetails<T>>::iterator p;
-        p = findPtrInfo(addr);
-        if(p->refcount){
-            p->refcount--;
-        }
+    typename std::list<PtrDetails<T>>::iterator p;
+    p = findPtrInfo(addr);
+    if(p->refcount){
+        p->refcount--;
+    }
         
     PtrDetails<T> ptr(t,0);
     ptr.memPtr = t;
