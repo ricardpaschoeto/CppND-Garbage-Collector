@@ -38,7 +38,8 @@ namespace custom {
     void list<T>::print() { 
         node* ptr= list::head;  
         while(ptr != NULL) { 
-            std::cout<< ptr->value <<" "; 
+            std::cout<< ptr->value << std::endl;
+            //std::cout<< "ptr: " << &ptr;
             ptr = ptr->next; 
         }
         std::cout << std::endl;

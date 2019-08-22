@@ -106,23 +106,21 @@ Pointer<T,size>::Pointer(T *t){
     if (first)
         atexit(shutdown);
     first = false;
-    typename std::list<PtrDetails<T>>::iterator p;
-    p = findPtrInfo(t);
-    if(p->memPtr != t && t)
-    {
-        PtrDetails<T> ptr(t);
-        addr = ptr.memPtr;
-        arraySize = ptr.arraySize;
-        if(arraySize > 0){
-            isArray = true;
-        }else{
-            isArray = false;
-        }
-        ptr.refcount++;
-        refContainer.push_front(ptr);
-    }else if(p->memPtr != (void*)0x1 && p->memPtr){
-        p->refcount++;
+
+    if(t){
+        PtrDetails<T> ptr(t,0);
+        ptr.memPtr = t;
+        ptr.isArray = false;
+
+        refContainer.push_back(ptr);
+
+        addr = t;
+        isArray = false;
+        arraySize = 0;
+
+        showlist();
     }
+
 }
 
 // Copy constructor.
@@ -130,10 +128,15 @@ template< class T, int size>
 Pointer<T,size>::Pointer(const Pointer &ob){
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(ob.addr);
+    if(p->memPtr && p->memPtr != (void*)0x1){
+        p->refcount++;
+    }
+    
 
-    p->refcount++;
     addr = ob.addr;
     arraySize = ob.arraySize;
+    refContainer = ob.refContainer;
+
     if(arraySize > 0)
         isArray = true;
     else
@@ -142,18 +145,20 @@ Pointer<T,size>::Pointer(const Pointer &ob){
     }
 
     ob.~Pointer();
+
+    showlist();
 }
 
 // Destructor for Pointer.
 template <class T, int size>
 Pointer<T, size>::~Pointer(){
+    showlist();
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(addr);
 
-    if(p->refcount > 0 && p->memPtr != (void*)0x1){
+    if(p->memPtr && p->memPtr != (void*)0x1 && p->refcount > 0){
         p->refcount--;
     }
-
 
     collect();    
 }
@@ -167,18 +172,19 @@ bool Pointer<T, size>::collect(){
     do
     {
         for(p = refContainer.begin(); p!= refContainer.end(); p++){
-            if(p->refcount == 0 && p->memPtr != (void*)0x1){
-                refContainer.erase(p);
-                if(p->memPtr){
-                    if(p->isArray){
-                        delete[] p->memPtr;
-                    }else
-                    {
-                        delete p->memPtr;
-                    }
-                memfreed = true;
-                break; 
+            if(p->refcount > 0)                
+                continue;
+            
+            refContainer.remove(*p);               
+            if(p->memPtr && p->memPtr != (void*)0x1){
+                if(p->isArray){
+                    delete[] p->memPtr;
+                }else
+                {
+                    delete p->memPtr;
                 }
+            memfreed = true;
+            break; 
             }
         }
 
@@ -191,24 +197,41 @@ bool Pointer<T, size>::collect(){
 template <class T, int size>
 T *Pointer<T, size>::operator=(T *t){
         typename std::list<PtrDetails<T>>::iterator p;
-        p = findPtrInfo(t);
+        p = findPtrInfo(addr);
+        if(p->refcount){
+            p->refcount--;
+        }
         
-        if(p->memPtr != (void*)0x1)
-            p->refcount++;
+    PtrDetails<T> ptr(t,0);
+    ptr.memPtr = t;
+    ptr.isArray = false;
 
-        return t;
+    refContainer.push_back(ptr);
+
+    addr = t;
+    isArray = false;
+    arraySize = 0;
+
+    showlist();
+
+    return addr;
 }
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
 Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
     typename std::list<PtrDetails<T>>::iterator p;
     p = findPtrInfo(addr);
-    p->refcount--;
+    if(p->refcount){
+        p->refcount--;
+    }
 
-    p = findPtrInfo(rv.addr);
-    p->refcount++;
+    addr = rv.addr;
+    isArray = rv.isArray;
+    arraySize = rv.arraySize;
 
-    return rv;
+    showlist();
+
+    return *this;
 }
 
 // A utility function that displays refContainer.
@@ -226,7 +249,7 @@ void Pointer<T, size>::showlist(){
         std::cout << "[" << (void *)p->memPtr << "]"
              << " " << p->refcount << " ";
         if (p->memPtr)
-            std::cout << " " << *p->memPtr;
+            std::cout << " " << p->memPtr;
         else
             std::cout << "---";
         std::cout << std::endl;
